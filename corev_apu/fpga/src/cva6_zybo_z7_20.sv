@@ -827,23 +827,26 @@ AXI_BUS #(
     .AXI_USER_WIDTH ( AxiUserWidth     )
 ) dram();
 
-axi_riscv_atomics_wrap #(
-    .AXI_ADDR_WIDTH ( AxiAddrWidth     ),
-    .AXI_DATA_WIDTH ( AxiDataWidth     ),
-    .AXI_ID_WIDTH   ( AxiIdWidthSlaves ),
-    .AXI_USER_WIDTH ( AxiUserWidth     ),
-    .AXI_MAX_WRITE_TXNS ( 1  ),
-    .RISCV_WORD_WIDTH   ( 64 )
-) i_axi_riscv_atomics (
-    .clk_i  ( clk                      ),
-    .rst_ni ( ndmreset_n               ),
-    .slv    ( master[ariane_soc::DRAM] ),
-    .mst    ( dram                     )
-);
+// axi_riscv_atomics_wrap #(
+//     .AXI_ADDR_WIDTH ( AxiAddrWidth     ),
+//     .AXI_DATA_WIDTH ( AxiDataWidth     ),
+//     .AXI_ID_WIDTH   ( AxiIdWidthSlaves ),
+//     .AXI_USER_WIDTH ( AxiUserWidth     ),
+//     .AXI_MAX_WRITE_TXNS ( 1  ),
+//     .RISCV_WORD_WIDTH   ( 64 )
+// ) i_axi_riscv_atomics (
+//     .clk_i  ( clk                      ),
+//     .rst_ni ( ndmreset_n               ),
+//     .slv    ( master[ariane_soc::DRAM] ),
+//     .mst    ( dram                     )
+// );
+
+//direct bypass AXI adapter
+`AXI_ASSIGN(dram, master[ariane_soc::DRAM])
 
 
-assign dram.r_user = '0;
-assign dram.b_user = '0;
+// assign dram.r_user = '0;
+// assign dram.b_user = '0;
 
 xlnx_clk_gen i_xlnx_clk_gen (
   .clk_out1 ( clk           ), // 50 MHz

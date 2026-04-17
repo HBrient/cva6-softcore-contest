@@ -47,7 +47,8 @@ bmarks = \
 	helloworld \
 	helloworld_printf \
 	mnist \
-	fft
+	fft \
+	test_copro
 
 #--------------------------------------------------------------------
 # Build rules

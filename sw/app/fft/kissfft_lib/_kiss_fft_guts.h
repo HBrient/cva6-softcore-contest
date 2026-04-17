@@ -24,17 +24,23 @@
  4*4*4*2
  */
 
+
+/*
 struct kiss_fft_state{
     int nfft;
     int inverse;
 
     // THE C_EXP OPERATIONS ARE PRECALCULATED
     int *factors;
-    kiss_fft_cpx *twiddles;
+    int32_t *twiddles;
 
 //     int factors[2*MAXFACTORS];
 //     kiss_fft_cpx twiddles[1];
 };
+
+typedef struct kiss_fft_state *kiss_fft_cfg;
+
+*/
 
 /*
   Explanation of macros dealing with complex math:
@@ -169,4 +175,5 @@ struct kiss_fft_state{
 #endif
 
 #endif /* _kiss_fft_guts_h */
+
 

@@ -193,7 +193,7 @@ export TYPEFLAGS
 # Target: "make all"
 #
 
-all: kfc.c.o kiss_fft.c.o kiss_fftnd.c.o kiss_fftndr.c.o kiss_fftr.c.o
+all: kiss_fft.c.o
 ifneq ($(KISSFFT_STATIC), 1)
 	$(CC) $(KISSFFTLIB_FLAGS) -o $(KISSFFTLIB_NAME) $^
   ifneq ($(shell uname -s),Darwin)
@@ -213,11 +213,7 @@ endif
 
 install: all
 	$(INSTALL) -Dt $(ABS_PKGINCLUDEDIR) -m 644 \
-		kiss_fft.h \
-		kissfft.hh \
-		kiss_fftnd.h \
-		kiss_fftndr.h \
-		kiss_fftr.h
+		kiss_fft.h
 	$(INSTALL) -Dt $(ABS_LIBDIR) -m 644 $(KISSFFTLIB_NAME)
 ifneq ($(KISSFFT_STATIC), 1)
   ifneq ($(shell uname -s),Darwin)
@@ -316,8 +312,9 @@ asm: kiss_fft.s
 
 # TODO: Sort out if we should add kfc / other C headers
 
-kiss_fft.s: kiss_fft.c kiss_fft.h _kiss_fft_guts.h
+kiss_fft.s: kiss_fft.c kiss_fft.h
 	[ -e kiss_fft.s ] && mv kiss_fft.s kiss_fft.s~ || true
 	$(CC) -S kiss_fft.c -O3 -mtune=native -ffast-math -fomit-frame-pointer -unroll-loops -dA -fverbose-asm
 	$(CC) -o kiss_fft_short.s -S kiss_fft.c -O3 -mtune=native -ffast-math -fomit-frame-pointer -dA -fverbose-asm -DFIXED_POINT
 	[ -e kiss_fft.s~ ] && diff kiss_fft.s~ kiss_fft.s || true
+

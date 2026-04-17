@@ -14,15 +14,15 @@ package cvxif_instr_pkg;
   typedef enum logic [3:0] {
     ILLEGAL = 4'b0000,
     NOP = 4'b0001,
-    ADD = 4'b0010,
-    DOUBLE_RS1 = 4'b0011,
-    DOUBLE_RS2 = 4'b0100,
-    ADD_MULTI = 4'b0101,
-    MADD_RS3_R4 = 4'b0110,
-    MSUB_RS3_R4 = 4'b0111,
-    NMADD_RS3_R4 = 4'b1000,
-    NMSUB_RS3_R4 = 4'b1001,
-    ADD_RS3_R = 4'b1111
+    BUF_RADIX_C = 4'b0010,
+    BUF_RADIX_R = 4'b0011,
+    R4_PUSH_2IN = 4'b0100,
+    //R4_PUSH_3CO = 4'b0101,
+    R4_PUSH_MULT = 4'b0110,
+    R4_PUSH_READ_1 = 4'b0111,
+    R4_PUSH_READ_2 = 4'b1000,
+    R4_PUSH_READ_3 = 4'b1001,
+    R4_PUSH_READ_4 = 4'b1010
   } opcode_t;
 
 
@@ -52,7 +52,7 @@ package cvxif_instr_pkg;
   } copro_compressed_resp_t;
 
   // 4 Possible RISCV instructions for Coprocessor
-  parameter int unsigned NbInstr = 10;
+  parameter int unsigned NbInstr = 9;
   parameter copro_issue_resp_t CoproInstr[NbInstr] = '{
       '{
           // Custom Nop
@@ -62,7 +62,7 @@ package cvxif_instr_pkg;
           resp : '{accept : 1'b1, writeback : 1'b0, register_read : {1'b0, 1'b0, 1'b0}},
           opcode : NOP
       },
-      '{
+      /*'{
           // Custom Add : cus_add rd, rs1, rs2
           instr:
           32'b00000_00_00000_00000_0_01_00000_1111011,  // custom3 opcode
@@ -71,69 +71,109 @@ package cvxif_instr_pkg;
           opcode : ADD
       },
       '{
-          // Custom Add rs1 : cus_add rd, rs1, rs1
+          // Custom Add : cus_add rd, rs1, rs2
+          instr:
+          32'b00000_00_00000_00000_0_10_00000_1111011,  // custom3 opcode
+          mask: 32'b11111_11_00000_00000_1_11_00000_1111111,
+          resp : '{accept : 1'b1, writeback : 1'b0, register_read : {1'b0, 1'b1, 1'b1}},
+          opcode : BUF_PUSH
+      },
+      '{
+          // Custom Add : cus_add rd, rs1, rs2
+          instr:
+          32'b00000_00_00000_00000_0_11_00000_1111011,  // custom3 opcode
+          mask: 32'b11111_11_00000_00000_1_11_00000_1111111,
+          resp : '{accept : 1'b1, writeback : 1'b0, register_read : {1'b0, 1'b0, 1'b1}},
+          opcode : BUF_COMPUTE
+      },
+      '{
+          // Custom Add : cus_add rd, rs1, rs2
+          instr:
+          32'b00000_00_00000_00000_1_00_00000_1111011,  // custom3 opcode
+          mask: 32'b11111_11_00000_00000_1_11_00000_1111111,
+          resp : '{accept : 1'b1, writeback : 1'b1, register_read : {1'b0, 1'b0, 1'b1}},
+          opcode : BUF_READ
+      },
+      '{
+          // Custom Add : cus_add rd, rs1, rs2
+          instr:
+          32'b00000_00_00000_00000_1_01_00000_1111011,  // custom3 opcode
+          mask: 32'b11111_11_00000_00000_1_11_00000_1111111,
+          resp : '{accept : 1'b1, writeback : 1'b1, register_read : {1'b0, 1'b0, 1'b0}},
+          opcode : BUF_STATUS
+      },
+      '{
+          // Custom Add : cus_add rd, rs1, rs2
+          instr:
+          32'b00000_00_00000_00000_1_10_00000_1111011,  // custom3 opcode
+          mask: 32'b11111_11_00000_00000_1_11_00000_1111111,
+          resp : '{accept : 1'b1, writeback : 1'b0, register_read : {1'b0, 1'b1, 1'b1}},
+          opcode : BUF_COMPUTE_2
+      },*/
+      '{
+          instr:
+          32'b00000_01_00000_00000_0_00_00000_1111011,  // custom3 opcode
+          mask: 32'b11111_11_00000_00000_1_11_00000_1111111,
+          resp : '{accept : 1'b1, writeback : 1'b1, register_read : {1'b0, 1'b1, 1'b1}},
+          opcode : BUF_RADIX_C
+      },
+      '{
           instr:
           32'b00000_01_00000_00000_0_01_00000_1111011,  // custom3 opcode
           mask: 32'b11111_11_00000_00000_1_11_00000_1111111,
-          resp : '{accept : 1'b1, writeback : 1'b1, register_read : {1'b0, 1'b0, 1'b1}},
-          opcode : DOUBLE_RS1
+          resp : '{accept : 1'b1, writeback : 1'b1, register_read : {1'b0, 1'b0, 1'b0}},
+          opcode : BUF_RADIX_R
       },
       '{
-          // Custom Add rs2 : cus_add rd, rs2, rs2
+          instr:
+          32'b00000_10_00000_00000_0_00_00000_1111011,  // custom3 opcode
+          mask: 32'b11111_11_00000_00000_1_11_00000_1111111,
+          resp : '{accept : 1'b1, writeback : 1'b0, register_read : {1'b0, 1'b1, 1'b1}},
+          opcode : R4_PUSH_2IN
+      },
+      /*'{
           instr:
           32'b00000_10_00000_00000_0_01_00000_1111011,  // custom3 opcode
           mask: 32'b11111_11_00000_00000_1_11_00000_1111111,
-          resp : '{accept : 1'b1, writeback : 1'b1, register_read : {1'b0, 1'b1, 1'b0}},
-          opcode : DOUBLE_RS2
+          resp : '{accept : 1'b1, writeback : 1'b0, register_read : {1'b1, 1'b1, 1'b1}},
+          opcode : R4_PUSH_3CO
+      },*/
+      '{
+          instr:
+          32'b00000_10_00000_00000_0_10_00000_1111011,  // custom3 opcode
+          mask: 32'b11111_11_00000_00000_1_11_00000_1111111,
+          resp : '{accept : 1'b1, writeback : 1'b0, register_read : {1'b0, 1'b1, 1'b1}},
+          opcode : R4_PUSH_MULT
       },
       '{
-          // Custom Add Multi rs1 : cus_add rd, rs1, rs1
           instr:
-          32'b00000_11_00000_00000_0_01_00000_1111011,  // custom3 opcode
+          32'b00000_10_00000_00000_0_11_00000_1111011,  // custom3 opcode
+          mask: 32'b11111_11_00000_00000_1_11_00000_1111111,
+          resp : '{accept : 1'b1, writeback : 1'b1, register_read : {1'b0, 1'b0, 1'b1}},
+          opcode : R4_PUSH_READ_1
+      },
+      '{
+          instr:
+          32'b00000_10_00000_00000_1_00_00000_1111011,  // custom3 opcode
           mask: 32'b11111_11_00000_00000_1_11_00000_1111111,
           resp : '{accept : 1'b1, writeback : 1'b1, register_read : {1'b0, 1'b1, 1'b1}},
-          opcode : ADD_MULTI
+          opcode : R4_PUSH_READ_2
       },
       '{
-          // Custom Add Multi rs1 : cus_add rd, rs1, rs1
           instr:
-          32'b00001_00_00000_00000_0_01_00000_1111011,  // custom3 opcode
+          32'b00000_10_00000_00000_1_01_00000_1111011,  // custom3 opcode
           mask: 32'b11111_11_00000_00000_1_11_00000_1111111,
-          resp : '{accept : 1'b1, writeback : 1'b1, register_read : {1'b1, 1'b1, 1'b1}},
-          opcode : ADD_RS3_R
+          resp : '{accept : 1'b1, writeback : 1'b1, register_read : {1'b0, 1'b1, 1'b1}},
+          opcode : R4_PUSH_READ_3
       },
       '{
-          // Custom Add Multi rs1 : cus_add rd, rs1, rs1
           instr:
-          32'b00000_00_00000_00000_0_00_00000_1000011,  // MADD opcode
-          mask: 32'b00000_11_00000_00000_1_11_00000_1111111,
-          resp : '{accept : 1'b1, writeback : 1'b1, register_read : {1'b1, 1'b1, 1'b1}},
-          opcode : MADD_RS3_R4
-      },
-      '{
-          // Custom Add Multi rs1 : cus_add rd, rs1, rs1
-          instr:
-          32'b00000_00_00000_00000_0_00_00000_1000111,  // MSUB opcode
-          mask: 32'b00000_11_00000_00000_1_11_00000_1111111,
-          resp : '{accept : 1'b1, writeback : 1'b1, register_read : {1'b1, 1'b1, 1'b1}},
-          opcode : MSUB_RS3_R4
-      },
-      '{
-          // Custom Add Multi rs1 : cus_add rd, rs1, rs1
-          instr:
-          32'b00000_00_00000_00000_0_00_00000_1001011,  // NMSUB opcode
-          mask: 32'b00000_11_00000_00000_1_11_00000_1111111,
-          resp : '{accept : 1'b1, writeback : 1'b1, register_read : {1'b1, 1'b1, 1'b1}},
-          opcode : NMSUB_RS3_R4
-      },
-      '{
-          // Custom Add Multi rs1 : cus_add rd, rs1, rs1
-          instr:
-          32'b00000_00_00000_00000_0_00_00000_1001111,  // NMADD opcode
-          mask: 32'b00000_11_00000_00000_1_11_00000_1111111,
-          resp : '{accept : 1'b1, writeback : 1'b1, register_read : {1'b1, 1'b1, 1'b1}},
-          opcode : NMADD_RS3_R4
+          32'b00000_10_00000_00000_1_10_00000_1111011,  // custom3 opcode
+          mask: 32'b11111_11_00000_00000_1_11_00000_1111111,
+          resp : '{accept : 1'b1, writeback : 1'b1, register_read : {1'b0, 1'b1, 1'b1}},
+          opcode : R4_PUSH_READ_4
       }
+      
   };
 
   parameter int unsigned NbCompInstr = 2;

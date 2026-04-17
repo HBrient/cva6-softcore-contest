@@ -7,10 +7,15 @@
  */
 
 #include "_kiss_fft_guts.h"
+#include "kiss_fft.h"
+#include "instr_copro.h"
+
 /* The guts header contains all the multiplication and addition macros that are defined for
  fixed or floating point complex numbers.  It also delares the kf_ internal functions.
  */
 
+
+/* Fonctions non compatibles avec les données en entrées
 static void kf_bfly2(
         kiss_fft_cpx * Fout,
         const size_t fstride,
@@ -187,7 +192,6 @@ static void kf_bfly5(
     }
 }
 
-/* perform the butterfly for one stage of a mixed radix FFT */
 static void kf_bfly_generic(
         kiss_fft_cpx * Fout,
         const size_t fstride,
@@ -229,81 +233,91 @@ static void kf_bfly_generic(
         }
     }
     KISS_FFT_TMP_FREE(scratch);
-}
+}*/
 
-static
-void kf_work(
-        kiss_fft_cpx * Fout,
-        const kiss_fft_cpx * f,
-        const size_t fstride,
-        int in_stride,
-        int * factors,
-        const kiss_fft_cfg st
-        )
+
+
+
+kiss_fft_cfg st_v2 = NULL ;
+
+
+static void copro_radix4(
+    int32_t *Fout,
+    const size_t fstride,
+    const size_t m)
 {
-    kiss_fft_cpx * Fout_beg=Fout;
-    const int p=*factors++; /* the radix  */
-    const int m=*factors++; /* stage's fft length/p */
-    const kiss_fft_cpx * Fout_end = Fout + p*m;
+    uint16_t itw1, itw2, itw3;
+    size_t k = m - 1;
+    const size_t m2 = 2 * m;
+    const size_t m3 = 3 * m;
+    /*const size_t m_bis = m + 1;
+    const size_t m2_bis = m2 + 1;
+    const size_t m3_bis = m3 + 1;*/
+    const int32_t *Fout_in = Fout;
 
-#ifdef _OPENMP
-    // use openmp extensions at the
-    // top-level (not recursive)
-    if (fstride==1 && p<=5 && m!=1)
+    itw1 = itw2 = itw3 = 0;
+
+    coproc_r4_push_2in(Fout[0], Fout[m]);
+    coproc_r4_push_mult(Fout[m2], Fout[m3]);
+
+    do
     {
-        int k;
+        ++Fout_in;
+        itw1 += fstride;
+        itw2 += fstride * 2;
+        itw3 += fstride * 3;
 
-        // execute the p different work units in different threads
-#       pragma omp parallel for
-        for (k=0;k<p;++k)
-            kf_work( Fout +k*m, f+ fstride*in_stride*k,fstride*p,in_stride,factors,st);
-        // all threads have joined by this point
+        Fout[m] = coproc_r4_push_read_2(Fout_in[m], st_v2->twiddles[itw1]);
+        Fout[m2] = coproc_r4_push_read_3(Fout_in[m2], st_v2->twiddles[itw2]);
+        Fout[m3] = coproc_r4_push_read_4(Fout_in[m3], st_v2->twiddles[itw3]);
+        Fout[0] = coproc_r4_push_read_1(*Fout_in);
 
-        switch (p) {
-            case 2: kf_bfly2(Fout,fstride,st,m); break;
-            case 3: kf_bfly3(Fout,fstride,st,m); break;
-            case 4: kf_bfly4(Fout,fstride,st,m); break;
-            case 5: kf_bfly5(Fout,fstride,st,m); break;
-            default: kf_bfly_generic(Fout,fstride,st,m,p); break;
-        }
-        return;
-    }
-#endif
+        ++Fout;
 
-    if (m==1) {
-        do{
-            *Fout = *f;
-            f += fstride*in_stride;
-        }while(++Fout != Fout_end );
-    }else{
-        do{
-            // recursive call:
-            // DFT of size m*p performed by doing
-            // p instances of smaller DFTs of size m,
-            // each one takes a decimated version of the input
-            kf_work( Fout , f, fstride*p, in_stride, factors,st);
-            f += fstride*in_stride;
-        }while( (Fout += m) != Fout_end );
-    }
-
-    Fout=Fout_beg;
-
-    // recombine the p smaller DFTs
-    switch (p) {
-        case 2: kf_bfly2(Fout,fstride,st,m); break;
-        case 3: kf_bfly3(Fout,fstride,st,m); break;
-        case 4: kf_bfly4(Fout,fstride,st,m); break;
-        case 5: kf_bfly5(Fout,fstride,st,m); break;
-        default: kf_bfly_generic(Fout,fstride,st,m,p); break;
-    }
+    } while (--k);
+    Fout[m] = coproc_r4_push_read_2(0, 0);
+    Fout[m2] = coproc_r4_push_read_3(0, 0);
+    Fout[m3] = coproc_r4_push_read_4(0, 0);
+    Fout[0] = coproc_r4_push_read_1(0);
 }
+
+
+
+
+static void kf_work(int32_t *Fout,const int32_t *f,const size_t fstride,int *factors)
+{
+   
+    const int p = *factors++;
+    const int m = *factors++; 
+
+	
+    if (m&1u)
+    {
+        Fout[0] = coproc_radix_c(f[0], f[fstride]);
+        Fout[1] = coproc_radix_r();
+    }
+    else
+    {
+     int32_t *Fout_beg = Fout;
+     const int32_t *Fout_end = Fout + m*4;
+     do{
+     	kf_work(Fout, f, fstride * 4, factors);
+        f += fstride ;
+    } while ((Fout += m) != Fout_end);
+    
+    Fout = Fout_beg;
+    copro_radix4(Fout, fstride, m);
+    
+    }
+
+}
+
 
 /*  facbuf is populated by p1,m1,p2,m2, ...
     where
     p[i] * m[i] = m[i-1]
     m0 = n                  */
-static
-void kf_factor(int n,int * facbuf)
+static void kf_factor(int n,int * facbuf)
 {
     int p=4;
     double floor_sqrt;
@@ -326,14 +340,12 @@ void kf_factor(int n,int * facbuf)
     } while (n > 1);
 }
 
-/*
- *
- * User-callable function to allocate all necessary storage space for the fft.
- *
- * The return value is a contiguous block of memory, allocated with malloc.  As such,
- * It can be freed with free(), rather than a kiss_fft-specific function.
- * */
-extern kiss_fft_cpx g_twiddles[512];
+void init_fft(){
+	st_v2 = kiss_fft_alloc(512,0, NULL, NULL) ;
+}
+
+
+extern int32_t g_twiddles[512];
 extern int g_factors[10];
 kiss_fft_cfg kiss_fft_alloc(int nfft,int inverse_fft,void * mem,size_t * lenmem )
 {
@@ -342,7 +354,7 @@ kiss_fft_cfg kiss_fft_alloc(int nfft,int inverse_fft,void * mem,size_t * lenmem 
 
     kiss_fft_cfg st=NULL;
     size_t memneeded = KISS_FFT_ALIGN_SIZE_UP(sizeof(struct kiss_fft_state)
-        + sizeof(kiss_fft_cpx)*(nfft-1)); /* twiddle factors*/
+        + sizeof(int32_t)*(nfft-1)); /* twiddle factors*/
 
     if ( lenmem==NULL ) {
         st = ( kiss_fft_cfg)KISS_FFT_MALLOC( memneeded );
@@ -358,7 +370,7 @@ kiss_fft_cfg kiss_fft_alloc(int nfft,int inverse_fft,void * mem,size_t * lenmem 
 
 	// THE C_EXP OPERATIONS ARE PRECALCULATED
 
-	st->twiddles = (kiss_fft_cpx *)&g_twiddles;
+	st->twiddles = (int32_t *)&g_twiddles;
 	st->factors = (int *)&g_factors;
 
         // for (i=0;i<nfft;++i) {
@@ -376,33 +388,14 @@ kiss_fft_cfg kiss_fft_alloc(int nfft,int inverse_fft,void * mem,size_t * lenmem 
 }
 
 
-void kiss_fft_stride(kiss_fft_cfg st,const kiss_fft_cpx *fin,kiss_fft_cpx *fout,int in_stride)
+void kiss_fft_stride(const int32_t *fin,int32_t *fout)
 {
-    if (fin == fout) {
-        //NOTE: this is not really an in-place FFT algorithm.
-        //It just performs an out-of-place FFT into a temp buffer
-        if (fout == NULL){
-            KISS_FFT_ERROR("fout buffer NULL.");
-        return;
-        }
-
-        kiss_fft_cpx * tmpbuf = (kiss_fft_cpx*)KISS_FFT_TMP_ALLOC( sizeof(kiss_fft_cpx)*st->nfft);
-        if (tmpbuf == NULL){
-            KISS_FFT_ERROR("Memory allocation error.");
-        return;
-        }
-
-        kf_work(tmpbuf,fin,1,in_stride, st->factors,st);
-        memcpy(fout,tmpbuf,sizeof(kiss_fft_cpx)*st->nfft);
-        KISS_FFT_TMP_FREE(tmpbuf);
-    }else{
-        kf_work( fout, fin, 1,in_stride, st->factors,st );
-    }
+    kf_work( fout, fin, 1, st_v2->factors );
 }
 
-void kiss_fft(kiss_fft_cfg cfg,const kiss_fft_cpx *fin,kiss_fft_cpx *fout)
+void kiss_fft(const int32_t *fin,int32_t *fout)
 {
-    kiss_fft_stride(cfg,fin,fout,1);
+    kiss_fft_stride(fin,fout);
 }
 
 
@@ -424,3 +417,4 @@ int kiss_fft_next_fast_size(int n)
     }
     return n;
 }
+

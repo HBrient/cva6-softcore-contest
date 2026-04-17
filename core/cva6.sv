@@ -577,9 +577,9 @@ module cva6
   // ----------------------------
   // Performance Counters <-> *
   // ----------------------------
-  logic [11:0] addr_csr_perf;
-  logic [CVA6Cfg.XLEN-1:0] data_csr_perf, data_perf_csr;
-  logic we_csr_perf;
+  // logic [11:0] addr_csr_perf;
+  // logic [CVA6Cfg.XLEN-1:0] data_csr_perf, data_perf_csr;
+  // logic we_csr_perf;
 
   logic icache_flush_ctrl_cache;
   logic itlb_miss_ex_perf;
@@ -1105,8 +1105,8 @@ module cva6
       .jvt_t             (jvt_t),
       .irq_ctrl_t        (irq_ctrl_t),
       .scoreboard_entry_t(scoreboard_entry_t),
-      .rvfi_probes_csr_t (rvfi_probes_csr_t),
-      .MHPMCounterNum    (MHPMCounterNum)
+      .rvfi_probes_csr_t (rvfi_probes_csr_t)
+      //.MHPMCounterNum    (MHPMCounterNum)
   ) csr_regfile_i (
       .clk_i,
       .rst_ni,
@@ -1172,20 +1172,20 @@ module cva6
       .icache_en_o             (icache_en_csr),
       .dcache_en_o             (dcache_en_csr_nbdcache),
       .acc_cons_en_o           (acc_cons_en_csr),
-      .perf_addr_o             (addr_csr_perf),
-      .perf_data_o             (data_csr_perf),
-      .perf_data_i             (data_perf_csr),
-      .perf_we_o               (we_csr_perf),
+      // .perf_addr_o             (addr_csr_perf),
+      // .perf_data_o             (data_csr_perf),
+      // .perf_data_i             (data_perf_csr),
+      // .perf_we_o               (we_csr_perf),
       .pmpcfg_o                (pmpcfg),
       .pmpaddr_o               (pmpaddr),
-      .mcountinhibit_o         (mcountinhibit_csr_perf),
+      // .mcountinhibit_o         (mcountinhibit_csr_perf),
       .jvt_o                   (jvt),
       //RVFI
       .rvfi_csr_o              (rvfi_csr)
   );
 
   // ------------------------
-  // Performance Counters
+  // Performance Counters       in theory its always zero PerfCounterEn=0, but we want to make sure that the signals are optimized out when not used.
   // ------------------------
   if (CVA6Cfg.PerfCounterEn) begin : gen_perf_counter
     perf_counters #(

@@ -312,6 +312,32 @@ module load_store_unit
         .pmpcfg_i,
         .pmpaddr_i
     );
+    // PMP only when MMU present
+    pmp_data_if #(
+        .CVA6Cfg      (CVA6Cfg),
+        .icache_areq_t(icache_areq_t),
+        .exception_t  (exception_t)
+    ) i_pmp_data_if (
+        .clk_i               (clk_i),
+        .rst_ni              (rst_ni),
+        .icache_areq_i       (pmp_icache_areq_i),
+        .icache_areq_o       (icache_areq_o),
+        .icache_fetch_vaddr_i(icache_areq_i.fetch_vaddr),
+        .lsu_valid_i         (pmp_translation_valid),
+        .lsu_paddr_i         (lsu_paddr),
+        .lsu_vaddr_i         (mmu_vaddr),
+        .lsu_exception_i     (pmp_exception),
+        .lsu_is_store_i      (st_translation_req),
+        .lsu_valid_o         (translation_valid),
+        .lsu_paddr_o         (mmu_paddr),
+        .lsu_exception_o     (mmu_exception),
+        .priv_lvl_i          (priv_lvl_i),
+        .v_i                 (v_i),
+        .ld_st_priv_lvl_i    (ld_st_priv_lvl_i),
+        .ld_st_v_i           (ld_st_v_i),
+        .pmpcfg_i            (pmpcfg_i),
+        .pmpaddr_i           (pmpaddr_i)
+    );
   end else begin : gen_no_mmu
     // icache request without MMU, virtual and physical address are identical
     assign pmp_icache_areq_i.fetch_valid = icache_areq_i.fetch_req;
@@ -356,38 +382,42 @@ module load_store_unit
                                                   mmu_vaddr[CVA6Cfg.PLEN-1:12] :
                                                   {{(CVA6Cfg.PLEN - CVA6Cfg.VLEN){1'b0}}, mmu_vaddr[CVA6Cfg.VLEN-1:12]};
     assign dtlb_hit                            = 1'b1;
-
+    // bypass PMP: direct output to load/store and icache
+    assign translation_valid = pmp_translation_valid;
+    assign mmu_paddr         = lsu_paddr;
+    assign mmu_exception     = pmp_exception;
+    assign icache_areq_o     = pmp_icache_areq_i;
   end
 
   // ------------------
   // PMP
   // ------------------
 
-  pmp_data_if #(
-      .CVA6Cfg      (CVA6Cfg),
-      .icache_areq_t(icache_areq_t),
-      .exception_t  (exception_t)
-  ) i_pmp_data_if (
-      .clk_i               (clk_i),
-      .rst_ni              (rst_ni),
-      .icache_areq_i       (pmp_icache_areq_i),
-      .icache_areq_o       (icache_areq_o),
-      .icache_fetch_vaddr_i(icache_areq_i.fetch_vaddr),
-      .lsu_valid_i         (pmp_translation_valid),
-      .lsu_paddr_i         (lsu_paddr),
-      .lsu_vaddr_i         (mmu_vaddr),
-      .lsu_exception_i     (pmp_exception),
-      .lsu_is_store_i      (st_translation_req),
-      .lsu_valid_o         (translation_valid),
-      .lsu_paddr_o         (mmu_paddr),
-      .lsu_exception_o     (mmu_exception),
-      .priv_lvl_i          (priv_lvl_i),
-      .v_i                 (v_i),
-      .ld_st_priv_lvl_i    (ld_st_priv_lvl_i),
-      .ld_st_v_i           (ld_st_v_i),
-      .pmpcfg_i            (pmpcfg_i),
-      .pmpaddr_i           (pmpaddr_i)
-  );
+  // pmp_data_if #(
+  //     .CVA6Cfg      (CVA6Cfg),
+  //     .icache_areq_t(icache_areq_t),
+  //     .exception_t  (exception_t)
+  // ) i_pmp_data_if (
+  //     .clk_i               (clk_i),
+  //     .rst_ni              (rst_ni),
+  //     .icache_areq_i       (pmp_icache_areq_i),
+  //     .icache_areq_o       (icache_areq_o),
+  //     .icache_fetch_vaddr_i(icache_areq_i.fetch_vaddr),
+  //     .lsu_valid_i         (pmp_translation_valid),
+  //     .lsu_paddr_i         (lsu_paddr),
+  //     .lsu_vaddr_i         (mmu_vaddr),
+  //     .lsu_exception_i     (pmp_exception),
+  //     .lsu_is_store_i      (st_translation_req),
+  //     .lsu_valid_o         (translation_valid),
+  //     .lsu_paddr_o         (mmu_paddr),
+  //     .lsu_exception_o     (mmu_exception),
+  //     .priv_lvl_i          (priv_lvl_i),
+  //     .v_i                 (v_i),
+  //     .ld_st_priv_lvl_i    (ld_st_priv_lvl_i),
+  //     .ld_st_v_i           (ld_st_v_i),
+  //     .pmpcfg_i            (pmpcfg_i),
+  //     .pmpaddr_i           (pmpaddr_i)
+  // );
 
 
   logic store_buffer_empty;
@@ -768,5 +798,4 @@ module load_store_unit
   assign rvfi_lsu_ctrl_o = lsu_ctrl;
 
 endmodule
-
 

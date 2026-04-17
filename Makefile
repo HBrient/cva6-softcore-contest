@@ -85,7 +85,7 @@ VL_INC_DIR := $(VERILATOR_INSTALL_DIR)/share/verilator/include
 BOARD          := zybo-z7-20
 XILINX_PART    := xc7z020clg400-1
 XILINX_BOARD   := digilentinc.com:zybo-z7-20:part0:1.2
-CLK_PERIOD_NS  := 25
+CLK_PERIOD_NS  := 31.25
 BATCH_MODE ?= 1
 
 #Path to questasim binaries

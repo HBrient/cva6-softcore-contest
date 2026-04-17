@@ -22,8 +22,8 @@ module csr_regfile
     parameter type                   irq_ctrl_t         = logic,
     parameter type                   scoreboard_entry_t = logic,
     parameter type                   rvfi_probes_csr_t  = logic,
-    parameter int                    VmidWidth          = 1,
-    parameter int unsigned           MHPMCounterNum     = 6
+    parameter int                    VmidWidth          = 1
+    //parameter int unsigned           MHPMCounterNum     = 6
 ) (
     // Subsystem Clock - SUBSYSTEM
     input logic clk_i,
@@ -153,20 +153,20 @@ module csr_regfile
     output logic dcache_en_o,
     // Accelerator memory consistent mode - ACC_DISPATCHER
     output logic acc_cons_en_o,
-    // read/write address to performance counter module - PERF_COUNTERS
-    output logic [11:0] perf_addr_o,
+    // read/write address to performance counter module - PERF_COUNTERS----------------------------------------------------------------
+    //output logic [11:0] perf_addr_o,
     // write data to performance counter module - PERF_COUNTERS
-    output logic [CVA6Cfg.XLEN-1:0] perf_data_o,
+    //output logic [CVA6Cfg.XLEN-1:0] perf_data_o,
     // read data from performance counter module - PERF_COUNTERS
-    input logic [CVA6Cfg.XLEN-1:0] perf_data_i,
+    //input logic [CVA6Cfg.XLEN-1:0] perf_data_i,
     // TO_BE_COMPLETED - PERF_COUNTERS
-    output logic perf_we_o,
+    //output logic perf_we_o,------------------------------------------------------------------------------------------------
     // PMP configuration containing pmpcfg for max 64 PMPs - ACC_DISPATCHER
     output riscv::pmpcfg_t [(CVA6Cfg.NrPMPEntries > 0 ? CVA6Cfg.NrPMPEntries-1 : 0):0] pmpcfg_o,
     // PMP addresses - ACC_DISPATCHER
     output logic [(CVA6Cfg.NrPMPEntries > 0 ? CVA6Cfg.NrPMPEntries-1 : 0):0][CVA6Cfg.PLEN-3:0] pmpaddr_o,
     // TO_BE_COMPLETED - PERF_COUNTERS
-    output logic [31:0] mcountinhibit_o,
+    //output logic [31:0] mcountinhibit_o,
     // RVFI
     output rvfi_probes_csr_t rvfi_csr_o,
     //jvt output
@@ -180,7 +180,7 @@ module csr_regfile
   localparam logic [63:0] VS_DELEG_INTERRUPTS = {
     {32{1'b0}}, ariane_pkg::vs_deleg_interrupts(CVA6Cfg)
   };
-  localparam int SELECT_COUNTER_WIDTH = CVA6Cfg.IS_XLEN64 ? 6 : 5;
+  //localparam int SELECT_COUNTER_WIDTH = CVA6Cfg.IS_XLEN64 ? 6 : 5;
 
   typedef struct packed {
     logic [CVA6Cfg.ModeW-1:0] mode;
@@ -277,7 +277,7 @@ module csr_regfile
 
   riscv::pmpcfg_t [63:0] pmpcfg_q, pmpcfg_d, pmpcfg_next;
   logic [63:0][CVA6Cfg.PLEN-3:0] pmpaddr_q, pmpaddr_d, pmpaddr_next;
-  logic [MHPMCounterNum+3-1:0] mcountinhibit_d, mcountinhibit_q;
+  //logic [MHPMCounterNum+3-1:0] mcountinhibit_d, mcountinhibit_q;
 
   localparam logic [CVA6Cfg.XLEN-1:0] IsaCode = (CVA6Cfg.XLEN'(CVA6Cfg.RVA) <<  0)                // A - Atomic Instructions extension
   | (CVA6Cfg.XLEN'(CVA6Cfg.RVB) << 1)  // B - Bitmanip extension
@@ -329,7 +329,7 @@ module csr_regfile
     read_access_exception = 1'b0;
     virtual_read_access_exception = 1'b0;
     csr_rdata = '0;
-    perf_addr_o = csr_addr.address[11:0];
+    //perf_addr_o = csr_addr.address[11:0];
 
     if (csr_read) begin
       unique case (conv_csr_addr.address)
@@ -561,8 +561,9 @@ module csr_regfile
         riscv::CSR_MIMPID: csr_rdata = '0;  // not implemented
         riscv::CSR_MHARTID: csr_rdata = hart_id_i;
         riscv::CSR_MCONFIGPTR: csr_rdata = '0;  // not implemented
-        riscv::CSR_MCOUNTINHIBIT:
-        csr_rdata = {{(CVA6Cfg.XLEN - (MHPMCounterNum + 3)) {1'b0}}, mcountinhibit_q};
+        //riscv::CSR_MCOUNTINHIBIT:
+        //csr_rdata = {{(CVA6Cfg.XLEN - (MHPMCounterNum + 3)) {1'b0}}, mcountinhibit_q};
+        
         // Counters and Timers
         riscv::CSR_MCYCLE: csr_rdata = cycle_q[CVA6Cfg.XLEN-1:0];
         riscv::CSR_MCYCLEH:
@@ -588,172 +589,7 @@ module csr_regfile
           if (CVA6Cfg.XLEN == 32) csr_rdata = instret_q[63:32];
           else read_access_exception = 1'b1;
         else read_access_exception = 1'b1;
-        //Event Selector
-        riscv::CSR_MHPM_EVENT_3,
-                riscv::CSR_MHPM_EVENT_4,
-                riscv::CSR_MHPM_EVENT_5,
-                riscv::CSR_MHPM_EVENT_6,
-                riscv::CSR_MHPM_EVENT_7,
-                riscv::CSR_MHPM_EVENT_8,
-                riscv::CSR_MHPM_EVENT_9,
-                riscv::CSR_MHPM_EVENT_10,
-                riscv::CSR_MHPM_EVENT_11,
-                riscv::CSR_MHPM_EVENT_12,
-                riscv::CSR_MHPM_EVENT_13,
-                riscv::CSR_MHPM_EVENT_14,
-                riscv::CSR_MHPM_EVENT_15,
-                riscv::CSR_MHPM_EVENT_16,
-                riscv::CSR_MHPM_EVENT_17,
-                riscv::CSR_MHPM_EVENT_18,
-                riscv::CSR_MHPM_EVENT_19,
-                riscv::CSR_MHPM_EVENT_20,
-                riscv::CSR_MHPM_EVENT_21,
-                riscv::CSR_MHPM_EVENT_22,
-                riscv::CSR_MHPM_EVENT_23,
-                riscv::CSR_MHPM_EVENT_24,
-                riscv::CSR_MHPM_EVENT_25,
-                riscv::CSR_MHPM_EVENT_26,
-                riscv::CSR_MHPM_EVENT_27,
-                riscv::CSR_MHPM_EVENT_28,
-                riscv::CSR_MHPM_EVENT_29,
-                riscv::CSR_MHPM_EVENT_30,
-                riscv::CSR_MHPM_EVENT_31 :
-        csr_rdata = perf_data_i;
-
-        riscv::CSR_MHPM_COUNTER_3,
-                riscv::CSR_MHPM_COUNTER_4,
-                riscv::CSR_MHPM_COUNTER_5,
-                riscv::CSR_MHPM_COUNTER_6,
-                riscv::CSR_MHPM_COUNTER_7,
-                riscv::CSR_MHPM_COUNTER_8,
-                riscv::CSR_MHPM_COUNTER_9,
-                riscv::CSR_MHPM_COUNTER_10,
-                riscv::CSR_MHPM_COUNTER_11,
-                riscv::CSR_MHPM_COUNTER_12,
-                riscv::CSR_MHPM_COUNTER_13,
-                riscv::CSR_MHPM_COUNTER_14,
-                riscv::CSR_MHPM_COUNTER_15,
-                riscv::CSR_MHPM_COUNTER_16,
-                riscv::CSR_MHPM_COUNTER_17,
-                riscv::CSR_MHPM_COUNTER_18,
-                riscv::CSR_MHPM_COUNTER_19,
-                riscv::CSR_MHPM_COUNTER_20,
-                riscv::CSR_MHPM_COUNTER_21,
-                riscv::CSR_MHPM_COUNTER_22,
-                riscv::CSR_MHPM_COUNTER_23,
-                riscv::CSR_MHPM_COUNTER_24,
-                riscv::CSR_MHPM_COUNTER_25,
-                riscv::CSR_MHPM_COUNTER_26,
-                riscv::CSR_MHPM_COUNTER_27,
-                riscv::CSR_MHPM_COUNTER_28,
-                riscv::CSR_MHPM_COUNTER_29,
-                riscv::CSR_MHPM_COUNTER_30,
-                riscv::CSR_MHPM_COUNTER_31 :
-        csr_rdata = perf_data_i;
-
-        riscv::CSR_MHPM_COUNTER_3H,
-                riscv::CSR_MHPM_COUNTER_4H,
-                riscv::CSR_MHPM_COUNTER_5H,
-                riscv::CSR_MHPM_COUNTER_6H,
-                riscv::CSR_MHPM_COUNTER_7H,
-                riscv::CSR_MHPM_COUNTER_8H,
-                riscv::CSR_MHPM_COUNTER_9H,
-                riscv::CSR_MHPM_COUNTER_10H,
-                riscv::CSR_MHPM_COUNTER_11H,
-                riscv::CSR_MHPM_COUNTER_12H,
-                riscv::CSR_MHPM_COUNTER_13H,
-                riscv::CSR_MHPM_COUNTER_14H,
-                riscv::CSR_MHPM_COUNTER_15H,
-                riscv::CSR_MHPM_COUNTER_16H,
-                riscv::CSR_MHPM_COUNTER_17H,
-                riscv::CSR_MHPM_COUNTER_18H,
-                riscv::CSR_MHPM_COUNTER_19H,
-                riscv::CSR_MHPM_COUNTER_20H,
-                riscv::CSR_MHPM_COUNTER_21H,
-                riscv::CSR_MHPM_COUNTER_22H,
-                riscv::CSR_MHPM_COUNTER_23H,
-                riscv::CSR_MHPM_COUNTER_24H,
-                riscv::CSR_MHPM_COUNTER_25H,
-                riscv::CSR_MHPM_COUNTER_26H,
-                riscv::CSR_MHPM_COUNTER_27H,
-                riscv::CSR_MHPM_COUNTER_28H,
-                riscv::CSR_MHPM_COUNTER_29H,
-                riscv::CSR_MHPM_COUNTER_30H,
-                riscv::CSR_MHPM_COUNTER_31H :
-        if (CVA6Cfg.XLEN == 32) csr_rdata = perf_data_i;
-        else read_access_exception = 1'b1;
-
-        // Performance counters (User Mode - R/O Shadows)
-        riscv::CSR_HPM_COUNTER_3,
-                riscv::CSR_HPM_COUNTER_4,
-                riscv::CSR_HPM_COUNTER_5,
-                riscv::CSR_HPM_COUNTER_6,
-                riscv::CSR_HPM_COUNTER_7,
-                riscv::CSR_HPM_COUNTER_8,
-                riscv::CSR_HPM_COUNTER_9,
-                riscv::CSR_HPM_COUNTER_10,
-                riscv::CSR_HPM_COUNTER_11,
-                riscv::CSR_HPM_COUNTER_12,
-                riscv::CSR_HPM_COUNTER_13,
-                riscv::CSR_HPM_COUNTER_14,
-                riscv::CSR_HPM_COUNTER_15,
-                riscv::CSR_HPM_COUNTER_16,
-                riscv::CSR_HPM_COUNTER_17,
-                riscv::CSR_HPM_COUNTER_18,
-                riscv::CSR_HPM_COUNTER_19,
-                riscv::CSR_HPM_COUNTER_20,
-                riscv::CSR_HPM_COUNTER_21,
-                riscv::CSR_HPM_COUNTER_22,
-                riscv::CSR_HPM_COUNTER_23,
-                riscv::CSR_HPM_COUNTER_24,
-                riscv::CSR_HPM_COUNTER_25,
-                riscv::CSR_HPM_COUNTER_26,
-                riscv::CSR_HPM_COUNTER_27,
-                riscv::CSR_HPM_COUNTER_28,
-                riscv::CSR_HPM_COUNTER_29,
-                riscv::CSR_HPM_COUNTER_30,
-                riscv::CSR_HPM_COUNTER_31 :
-        if (CVA6Cfg.RVZihpm) begin
-          csr_rdata = perf_data_i;
-        end else begin
-          read_access_exception = 1'b1;
-        end
-
-        riscv::CSR_HPM_COUNTER_3H,
-                riscv::CSR_HPM_COUNTER_4H,
-                riscv::CSR_HPM_COUNTER_5H,
-                riscv::CSR_HPM_COUNTER_6H,
-                riscv::CSR_HPM_COUNTER_7H,
-                riscv::CSR_HPM_COUNTER_8H,
-                riscv::CSR_HPM_COUNTER_9H,
-                riscv::CSR_HPM_COUNTER_10H,
-                riscv::CSR_HPM_COUNTER_11H,
-                riscv::CSR_HPM_COUNTER_12H,
-                riscv::CSR_HPM_COUNTER_13H,
-                riscv::CSR_HPM_COUNTER_14H,
-                riscv::CSR_HPM_COUNTER_15H,
-                riscv::CSR_HPM_COUNTER_16H,
-                riscv::CSR_HPM_COUNTER_17H,
-                riscv::CSR_HPM_COUNTER_18H,
-                riscv::CSR_HPM_COUNTER_19H,
-                riscv::CSR_HPM_COUNTER_20H,
-                riscv::CSR_HPM_COUNTER_21H,
-                riscv::CSR_HPM_COUNTER_22H,
-                riscv::CSR_HPM_COUNTER_23H,
-                riscv::CSR_HPM_COUNTER_24H,
-                riscv::CSR_HPM_COUNTER_25H,
-                riscv::CSR_HPM_COUNTER_26H,
-                riscv::CSR_HPM_COUNTER_27H,
-                riscv::CSR_HPM_COUNTER_28H,
-                riscv::CSR_HPM_COUNTER_29H,
-                riscv::CSR_HPM_COUNTER_30H,
-                riscv::CSR_HPM_COUNTER_31H :
-        if (CVA6Cfg.RVZihpm) begin
-          if (CVA6Cfg.XLEN == 32) csr_rdata = perf_data_i;
-          else read_access_exception = 1'b1;
-        end else begin
-          read_access_exception = 1'b1;
-        end
+        
 
         // custom (non RISC-V) cache control
         riscv::CSR_DCACHE: csr_rdata = dcache_q;
@@ -890,25 +726,18 @@ module csr_regfile
     end
     instret         = instret_q;
 
-    mcountinhibit_d = mcountinhibit_q;
+    //mcountinhibit_d = mcountinhibit_q;
 
     // --------------------
     // Counters
     // --------------------
-    cycle_d         = cycle_q;
-    instret_d       = instret_q;
-    if (!(CVA6Cfg.DebugEn && debug_mode_q)) begin
-      // increase instruction retired counter
-      for (int i = 0; i < CVA6Cfg.NrCommitPorts; i++) begin
-        if (commit_ack_i[i] && !ex_i.valid && (!CVA6Cfg.PerfCounterEn || (CVA6Cfg.PerfCounterEn && !mcountinhibit_q[2])))
-          instret++;
-      end
-      instret_d = instret;
-      // increment the cycle count
-      if (!CVA6Cfg.PerfCounterEn || (CVA6Cfg.PerfCounterEn && !mcountinhibit_q[0]))
-        cycle_d = cycle_q + 1'b1;
-      else cycle_d = cycle_q;
+    // instret counter
+    for (int i = 0; i < CVA6Cfg.NrCommitPorts; i++) begin
+        if (commit_ack_i[i] && !ex_i.valid) instret++;
     end
+    instret_d = instret;
+    // cycle counter
+    cycle_d = cycle_q + 1'b1;
 
     eret_o                          = 1'b0;
     flush_o                         = 1'b0;
@@ -917,8 +746,8 @@ module csr_regfile
 
     set_debug_pc_o                  = 1'b0;
 
-    perf_we_o                       = 1'b0;
-    perf_data_o                     = 'b0;
+    //perf_we_o                       = 1'b0;
+    //perf_data_o                     = 'b0;
     if (CVA6Cfg.RVZCMT) begin
       jvt_d = jvt_q;
     end
@@ -1513,119 +1342,14 @@ module csr_regfile
         riscv::CSR_MENVCFGH: begin
           if (!CVA6Cfg.RVU || CVA6Cfg.XLEN != 32) update_access_exception = 1'b1;
         end
-        riscv::CSR_MCOUNTINHIBIT:
-        if (CVA6Cfg.PerfCounterEn)
-          mcountinhibit_d = {csr_wdata[MHPMCounterNum+2:2], 1'b0, csr_wdata[0]};
-        else mcountinhibit_d = '0;
-        // performance counters
-        riscv::CSR_MCYCLE: cycle_d[CVA6Cfg.XLEN-1:0] = csr_wdata;
+        riscv::CSR_MCYCLE:   cycle_d[CVA6Cfg.XLEN-1:0] = csr_wdata;
         riscv::CSR_MCYCLEH:
-        if (CVA6Cfg.XLEN == 32) cycle_d[63:32] = csr_wdata;
-        else update_access_exception = 1'b1;
+          if (CVA6Cfg.XLEN == 32) cycle_d[63:32] = csr_wdata;
+          else update_access_exception = 1'b1;
         riscv::CSR_MINSTRET: instret_d[CVA6Cfg.XLEN-1:0] = csr_wdata;
         riscv::CSR_MINSTRETH:
-        if (CVA6Cfg.XLEN == 32) instret_d[63:32] = csr_wdata;
-        else update_access_exception = 1'b1;
-        //Event Selector
-        riscv::CSR_MHPM_EVENT_3,
-                riscv::CSR_MHPM_EVENT_4,
-                riscv::CSR_MHPM_EVENT_5,
-                riscv::CSR_MHPM_EVENT_6,
-                riscv::CSR_MHPM_EVENT_7,
-                riscv::CSR_MHPM_EVENT_8,
-                riscv::CSR_MHPM_EVENT_9,
-                riscv::CSR_MHPM_EVENT_10,
-                riscv::CSR_MHPM_EVENT_11,
-                riscv::CSR_MHPM_EVENT_12,
-                riscv::CSR_MHPM_EVENT_13,
-                riscv::CSR_MHPM_EVENT_14,
-                riscv::CSR_MHPM_EVENT_15,
-                riscv::CSR_MHPM_EVENT_16,
-                riscv::CSR_MHPM_EVENT_17,
-                riscv::CSR_MHPM_EVENT_18,
-                riscv::CSR_MHPM_EVENT_19,
-                riscv::CSR_MHPM_EVENT_20,
-                riscv::CSR_MHPM_EVENT_21,
-                riscv::CSR_MHPM_EVENT_22,
-                riscv::CSR_MHPM_EVENT_23,
-                riscv::CSR_MHPM_EVENT_24,
-                riscv::CSR_MHPM_EVENT_25,
-                riscv::CSR_MHPM_EVENT_26,
-                riscv::CSR_MHPM_EVENT_27,
-                riscv::CSR_MHPM_EVENT_28,
-                riscv::CSR_MHPM_EVENT_29,
-                riscv::CSR_MHPM_EVENT_30,
-                riscv::CSR_MHPM_EVENT_31 :     begin
-          perf_we_o   = 1'b1;
-          perf_data_o = csr_wdata;
-        end
-
-        riscv::CSR_MHPM_COUNTER_3,
-                riscv::CSR_MHPM_COUNTER_4,
-                riscv::CSR_MHPM_COUNTER_5,
-                riscv::CSR_MHPM_COUNTER_6,
-                riscv::CSR_MHPM_COUNTER_7,
-                riscv::CSR_MHPM_COUNTER_8,
-                riscv::CSR_MHPM_COUNTER_9,
-                riscv::CSR_MHPM_COUNTER_10,
-                riscv::CSR_MHPM_COUNTER_11,
-                riscv::CSR_MHPM_COUNTER_12,
-                riscv::CSR_MHPM_COUNTER_13,
-                riscv::CSR_MHPM_COUNTER_14,
-                riscv::CSR_MHPM_COUNTER_15,
-                riscv::CSR_MHPM_COUNTER_16,
-                riscv::CSR_MHPM_COUNTER_17,
-                riscv::CSR_MHPM_COUNTER_18,
-                riscv::CSR_MHPM_COUNTER_19,
-                riscv::CSR_MHPM_COUNTER_20,
-                riscv::CSR_MHPM_COUNTER_21,
-                riscv::CSR_MHPM_COUNTER_22,
-                riscv::CSR_MHPM_COUNTER_23,
-                riscv::CSR_MHPM_COUNTER_24,
-                riscv::CSR_MHPM_COUNTER_25,
-                riscv::CSR_MHPM_COUNTER_26,
-                riscv::CSR_MHPM_COUNTER_27,
-                riscv::CSR_MHPM_COUNTER_28,
-                riscv::CSR_MHPM_COUNTER_29,
-                riscv::CSR_MHPM_COUNTER_30,
-                riscv::CSR_MHPM_COUNTER_31 :  begin
-          perf_we_o   = 1'b1;
-          perf_data_o = csr_wdata;
-        end
-
-        riscv::CSR_MHPM_COUNTER_3H,
-                riscv::CSR_MHPM_COUNTER_4H,
-                riscv::CSR_MHPM_COUNTER_5H,
-                riscv::CSR_MHPM_COUNTER_6H,
-                riscv::CSR_MHPM_COUNTER_7H,
-                riscv::CSR_MHPM_COUNTER_8H,
-                riscv::CSR_MHPM_COUNTER_9H,
-                riscv::CSR_MHPM_COUNTER_10H,
-                riscv::CSR_MHPM_COUNTER_11H,
-                riscv::CSR_MHPM_COUNTER_12H,
-                riscv::CSR_MHPM_COUNTER_13H,
-                riscv::CSR_MHPM_COUNTER_14H,
-                riscv::CSR_MHPM_COUNTER_15H,
-                riscv::CSR_MHPM_COUNTER_16H,
-                riscv::CSR_MHPM_COUNTER_17H,
-                riscv::CSR_MHPM_COUNTER_18H,
-                riscv::CSR_MHPM_COUNTER_19H,
-                riscv::CSR_MHPM_COUNTER_20H,
-                riscv::CSR_MHPM_COUNTER_21H,
-                riscv::CSR_MHPM_COUNTER_22H,
-                riscv::CSR_MHPM_COUNTER_23H,
-                riscv::CSR_MHPM_COUNTER_24H,
-                riscv::CSR_MHPM_COUNTER_25H,
-                riscv::CSR_MHPM_COUNTER_26H,
-                riscv::CSR_MHPM_COUNTER_27H,
-                riscv::CSR_MHPM_COUNTER_28H,
-                riscv::CSR_MHPM_COUNTER_29H,
-                riscv::CSR_MHPM_COUNTER_30H,
-                riscv::CSR_MHPM_COUNTER_31H :  begin
-          perf_we_o = 1'b1;
-          if (CVA6Cfg.XLEN == 32) perf_data_o = csr_wdata;
+          if (CVA6Cfg.XLEN == 32) instret_d[63:32] = csr_wdata;
           else update_access_exception = 1'b1;
-        end
 
         riscv::CSR_DCACHE: dcache_d = {{CVA6Cfg.XLEN - 1{1'b0}}, csr_wdata[0]};  // enable bit
         riscv::CSR_ICACHE: icache_d = {{CVA6Cfg.XLEN - 1{1'b0}}, csr_wdata[0]};  // enable bit
@@ -2240,111 +1964,36 @@ module csr_regfile
     if (CVA6Cfg.RVH) begin
       automatic riscv::priv_lvl_t access_priv;
       automatic riscv::priv_lvl_t curr_priv;
-      automatic logic [SELECT_COUNTER_WIDTH-1:0] sel_cnt_en;
-      // transforms S mode accesses into HS mode
+      //automatic logic [SELECT_COUNTER_WIDTH-1:0] sel_cnt_en;
       access_priv = (priv_lvl_o == riscv::PRIV_LVL_S && !v_q) ? riscv::PRIV_LVL_HS : priv_lvl_o;
       curr_priv = priv_lvl_o;
-      sel_cnt_en = {{SELECT_COUNTER_WIDTH - 5{1'b0}}, csr_addr_i[4:0]};
-      // -----------------
-      // Privilege Check
-      // -----------------
+      //sel_cnt_en = {{SELECT_COUNTER_WIDTH - 5{1'b0}}, csr_addr_i[4:0]};
       privilege_violation = 1'b0;
       virtual_privilege_violation = 1'b0;
-      // if we are reading or writing, check for the correct privilege level this has
-      // precedence over interrupts
       if (csr_op_i inside {CSR_WRITE, CSR_SET, CSR_CLEAR, CSR_READ}) begin
         if (access_priv < csr_addr.csr_decode.priv_lvl) begin
           if (v_q && csr_addr.csr_decode.priv_lvl <= riscv::PRIV_LVL_HS)
             virtual_privilege_violation = 1'b1;
           else privilege_violation = 1'b1;
         end
-        // check access to debug mode only CSRs
         if ((!CVA6Cfg.DebugEn && csr_addr_i[11:4] == 8'h7b) || (CVA6Cfg.DebugEn && csr_addr_i[11:4] == 8'h7b && !debug_mode_q)) begin
           privilege_violation = 1'b1;
         end
-        // check counter-enabled counter CSR accesses
-        // counter address range is C00 to C1F
-        if (CVA6Cfg.RVZihpm) begin
-          if (csr_addr_i inside {[riscv::CSR_HPM_COUNTER_3 : riscv::CSR_HPM_COUNTER_31]} |
-              csr_addr_i inside {[riscv::CSR_HPM_COUNTER_3H : riscv::CSR_HPM_COUNTER_31H]}) begin
-            if (curr_priv == riscv::PRIV_LVL_S && CVA6Cfg.RVS) begin
-              virtual_privilege_violation = v_q & mcounteren_q[sel_cnt_en] & ~hcounteren_q[sel_cnt_en];
-              privilege_violation = ~mcounteren_q[sel_cnt_en];
-            end else if (priv_lvl_o == riscv::PRIV_LVL_U && CVA6Cfg.RVU) begin
-              virtual_privilege_violation = v_q & mcounteren_q[sel_cnt_en] & ~hcounteren_q[sel_cnt_en];
-              if (v_q) begin
-                privilege_violation = ~mcounteren_q[sel_cnt_en] & ~scounteren_q[sel_cnt_en] & hcounteren_q[sel_cnt_en];
-              end else begin
-                privilege_violation = ~mcounteren_q[sel_cnt_en] & ~scounteren_q[sel_cnt_en];
-              end
-            end else if (priv_lvl_o == riscv::PRIV_LVL_M) begin
-              privilege_violation = 1'b0;
-            end
-          end
-        end
-        if (CVA6Cfg.RVZicntr) begin
-          if (csr_addr_i inside {[riscv::CSR_CYCLE : riscv::CSR_INSTRET]} |
-              csr_addr_i inside {[riscv::CSR_CYCLEH : riscv::CSR_INSTRETH]}) begin
-            if (curr_priv == riscv::PRIV_LVL_S && CVA6Cfg.RVS) begin
-              virtual_privilege_violation = v_q & mcounteren_q[sel_cnt_en] & ~hcounteren_q[sel_cnt_en];
-              privilege_violation = ~mcounteren_q[sel_cnt_en];
-            end else if (priv_lvl_o == riscv::PRIV_LVL_U && CVA6Cfg.RVU) begin
-              virtual_privilege_violation = v_q & mcounteren_q[sel_cnt_en] & ~hcounteren_q[sel_cnt_en];
-              if (v_q) begin
-                privilege_violation = ~mcounteren_q[sel_cnt_en] & ~scounteren_q[sel_cnt_en] & hcounteren_q[sel_cnt_en];
-              end else begin
-                privilege_violation = ~mcounteren_q[sel_cnt_en] & ~scounteren_q[sel_cnt_en];
-              end
-            end else if (priv_lvl_o == riscv::PRIV_LVL_M) begin
-              privilege_violation = 1'b0;
-            end
-          end
-        end
-      end
-    end else begin
-      // -----------------
-      // Privilege Check
-      // -----------------
+        
+      end  // fecha if(csr_op_i)
+    end else begin   
       privilege_violation = 1'b0;
-      // if we are reading or writing, check for the correct privilege level this has
-      // precedence over interrupts
       if (csr_op_i inside {CSR_WRITE, CSR_SET, CSR_CLEAR, CSR_READ}) begin
         if (CVA6Cfg.RVU && (riscv::priv_lvl_t'(priv_lvl_o & csr_addr.csr_decode.priv_lvl) != csr_addr.csr_decode.priv_lvl)) begin
           privilege_violation = 1'b1;
         end
-        // check access to debug mode only CSRs
         if ((!CVA6Cfg.DebugEn && csr_addr_i[11:4] == 8'h7b) || (CVA6Cfg.DebugEn && csr_addr_i[11:4] == 8'h7b && !debug_mode_q)) begin
           privilege_violation = 1'b1;
         end
-        // check counter-enabled counter CSR accesses
-        // counter address range is C00 to C1F
-        if (CVA6Cfg.RVZihpm) begin
-          if (csr_addr_i inside {[riscv::CSR_HPM_COUNTER_3 : riscv::CSR_HPM_COUNTER_31]} |
-              csr_addr_i inside {[riscv::CSR_HPM_COUNTER_3H : riscv::CSR_HPM_COUNTER_31H]}) begin
-            if (priv_lvl_o == riscv::PRIV_LVL_S && CVA6Cfg.RVS) begin
-              privilege_violation = ~mcounteren_q[csr_addr_i[4:0]];
-            end else if (priv_lvl_o == riscv::PRIV_LVL_U && CVA6Cfg.RVU) begin
-              privilege_violation = ~mcounteren_q[csr_addr_i[4:0]] | ~scounteren_q[csr_addr_i[4:0]];
-            end else if (priv_lvl_o == riscv::PRIV_LVL_M) begin
-              privilege_violation = 1'b0;
-            end
-          end
-        end
-        if (CVA6Cfg.RVZicntr) begin
-          if (csr_addr_i inside {[riscv::CSR_CYCLE : riscv::CSR_INSTRET]} |
-              csr_addr_i inside {[riscv::CSR_CYCLEH : riscv::CSR_INSTRETH]}) begin
-            if (priv_lvl_o == riscv::PRIV_LVL_S && CVA6Cfg.RVS) begin
-              privilege_violation = ~mcounteren_q[csr_addr_i[4:0]];
-            end else if (priv_lvl_o == riscv::PRIV_LVL_U && CVA6Cfg.RVU) begin
-              privilege_violation = ~mcounteren_q[csr_addr_i[4:0]] | ~scounteren_q[csr_addr_i[4:0]];
-            end else if (priv_lvl_o == riscv::PRIV_LVL_M) begin
-              privilege_violation = 1'b0;
-            end
-          end
-        end
-      end
-    end
-  end
+        
+      end  // fecha if(csr_op_i)
+    end    // fecha else
+  end      // fecha always_comb
   // ----------------------
   // CSR Exception Control
   // ----------------------
@@ -2531,7 +2180,7 @@ module csr_regfile
   assign mprv = (CVA6Cfg.DebugEn && debug_mode_q && !dcsr_q.mprven) ? 1'b0 : mstatus_q.mprv;
   assign debug_mode_o = debug_mode_q;
   assign single_step_o = CVA6Cfg.DebugEn ? dcsr_q.step : 1'b0;
-  assign mcountinhibit_o = {{29 - MHPMCounterNum{1'b0}}, mcountinhibit_q};
+  //assign mcountinhibit_o = {{29 - MHPMCounterNum{1'b0}}, mcountinhibit_q};
 
   // sequential process
   always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -2565,7 +2214,7 @@ module csr_regfile
       fiom_q          <= '0;
       dcache_q        <= {{CVA6Cfg.XLEN - 1{1'b0}}, 1'b1};
       icache_q        <= {{CVA6Cfg.XLEN - 1{1'b0}}, 1'b1};
-      mcountinhibit_q <= '0;
+      //mcountinhibit_q <= '0;
       acc_cons_q      <= {{CVA6Cfg.XLEN - 1{1'b0}}, CVA6Cfg.EnableAccelerator};
       // supervisor mode registers
       if (CVA6Cfg.RVS) begin
@@ -2603,8 +2252,8 @@ module csr_regfile
         en_ld_st_g_translation_q <= 1'b0;
       end
       // timer and counters
-      cycle_q                <= 64'b0;
-      instret_q              <= 64'b0;
+       cycle_q                <= 64'b0;
+       instret_q              <= 64'b0;
       // aux registers
       en_ld_st_translation_q <= 1'b0;
       // wait for interrupt
@@ -2648,7 +2297,7 @@ module csr_regfile
       fiom_q          <= fiom_d;
       dcache_q        <= dcache_d;
       icache_q        <= icache_d;
-      mcountinhibit_q <= mcountinhibit_d;
+      //mcountinhibit_q <= mcountinhibit_d;
       acc_cons_q      <= acc_cons_d;
       // supervisor mode registers
       if (CVA6Cfg.RVS) begin
@@ -2771,7 +2420,7 @@ module csr_regfile
   assign rvfi_csr_o.mcause_q = mcause_q;
   assign rvfi_csr_o.mtval_q = CVA6Cfg.TvalEn ? mtval_q : '0;
   assign rvfi_csr_o.fiom_q = fiom_q;
-  assign rvfi_csr_o.mcountinhibit_q = mcountinhibit_q;
+  //assign rvfi_csr_o.mcountinhibit_q = mcountinhibit_q;
   assign rvfi_csr_o.cycle_q = cycle_q;
   assign rvfi_csr_o.instret_q = instret_q;
   assign rvfi_csr_o.dcache_q = dcache_q;

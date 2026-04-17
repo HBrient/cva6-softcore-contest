@@ -18,7 +18,7 @@ package cva6_config_pkg;
   localparam CVA6ConfigF8En = 0;
   localparam CVA6ConfigFVecEn = 0;
 
-  localparam CVA6ConfigCvxifEn = 0;
+  localparam CVA6ConfigCvxifEn = 1;
   localparam CVA6ConfigCExtEn = 0;
   localparam CVA6ConfigZcbExtEn = 0;
   localparam CVA6ConfigZcmpExtEn = 0;
@@ -47,11 +47,11 @@ package cva6_config_pkg;
 
   localparam CVA6ConfigWtDcacheWbufDepth = 2;
 
-  localparam CVA6ConfigNrScoreboardEntries = 4;
+  localparam CVA6ConfigNrScoreboardEntries = 8;  //***********************************
 
-  localparam CVA6ConfigNrLoadPipeRegs = 1;
+  localparam CVA6ConfigNrLoadPipeRegs = 0;
   localparam CVA6ConfigNrStorePipeRegs = 0;
-  localparam CVA6ConfigNrLoadBufEntries = 1;
+  localparam CVA6ConfigNrLoadBufEntries = 2;//2
 
   localparam CVA6ConfigRASDepth = 2;
   localparam CVA6ConfigBTBEntries = 32;
@@ -59,7 +59,7 @@ package cva6_config_pkg;
 
   localparam CVA6ConfigTvalEn = 1;
 
-  localparam CVA6ConfigNrPMPEntries = 8;
+  localparam CVA6ConfigNrPMPEntries = 0;
 
   localparam CVA6ConfigPerfCounterEn = 0;
 
@@ -90,7 +90,7 @@ package cva6_config_pkg;
       XF8: bit'(CVA6ConfigF8En),
       RVA: bit'(CVA6ConfigAExtEn),
       RVB: bit'(0),
-      ZKN: bit'(1),
+      ZKN: bit'(1),//*********************************************
       RVV: bit'(CVA6ConfigVExtEn),
       RVC: bit'(CVA6ConfigCExtEn),
       RVH: bit'(CVA6ConfigHExtEn),
@@ -157,3 +157,4 @@ package cva6_config_pkg;
   };
 
 endpackage
+
