@@ -36,25 +36,21 @@ int main(void)
 	int32_t cx_out[N];
 
 	// FFT configuration
-	//kiss_fft_cfg cfg = kiss_fft_alloc(N, 0, NULL, NULL);
-	
-	
-	init_fft() ;
-	
+	kiss_fft_cfg cfg = kiss_fft_alloc(N, 0, NULL, NULL);
 
-	/*if (!cfg)
+	if (!cfg)
 	{
 
 		printf("FFT alloc failed\n");
 		return 1;
-	}*/
+	}
 
 	printf("FFT running...\n");
 
 	// Run FFT
 	instret = -read_csr(minstret);
 	cycles = -read_csr(mcycle);
-	kiss_fft(cx_in, cx_out);
+	kiss_fft(cfg, cx_in, cx_out);
 	instret += read_csr(minstret);
 	cycles += read_csr(mcycle);
 
@@ -75,6 +71,6 @@ int main(void)
 
 	printf("SUCCESS : fft result values correct\n");
 
-	//kiss_fft_free(cfg);
+	kiss_fft_free(cfg);
 	return 0;
 }

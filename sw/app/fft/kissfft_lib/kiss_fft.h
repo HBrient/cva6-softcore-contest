@@ -50,9 +50,9 @@ extern "C"
 
    struct kiss_fft_state
    {
-   
-   int nfft;
-    int inverse;
+      int nfft;
+      int inverse;
+
       // THE C_EXP OPERATIONS ARE PRECALCULATED
       int *factors;
       int32_t *twiddles;
@@ -95,14 +95,12 @@ extern "C"
     * Note that each element is complex and can be accessed like
        f[k].r and f[k].i
     * */
-   void KISS_FFT_API kiss_fft(const int32_t *fin, int32_t *fout);
+   void KISS_FFT_API kiss_fft(kiss_fft_cfg cfg, const int32_t *fin, int32_t *fout);
 
-static void KISS_FFT_API kf_work(int32_t *Fout,const int32_t *f,const size_t fstride,int *factors) ;
-
-   void KISS_FFT_API init_fft();
    /*
     A more generic version of the above function. It reads its input from every Nth sample.
     * */
+   void KISS_FFT_API kiss_fft_stride(kiss_fft_cfg cfg, const int32_t *fin, int32_t *fout, int fin_stride);
 
 /* If kiss_fft_alloc allocated a buffer, it is one contiguous
    buffer and can be simply free()d when no longer needed*/
@@ -113,5 +111,3 @@ static void KISS_FFT_API kf_work(int32_t *Fout,const int32_t *f,const size_t fst
 #endif
 
 #endif
-
-

@@ -25,23 +25,20 @@
  */
 
 
-/*
+
+/* Déjà défini dans kiss_fft.h
 struct kiss_fft_state{
     int nfft;
     int inverse;
 
     // THE C_EXP OPERATIONS ARE PRECALCULATED
     int *factors;
-    int32_t *twiddles;
+    kiss_fft_cpx *twiddles;
 
 //     int factors[2*MAXFACTORS];
 //     kiss_fft_cpx twiddles[1];
 };
-
-typedef struct kiss_fft_state *kiss_fft_cfg;
-
 */
-
 /*
   Explanation of macros dealing with complex math:
 
